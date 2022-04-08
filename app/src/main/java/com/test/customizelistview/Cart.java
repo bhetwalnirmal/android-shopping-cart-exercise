@@ -1,6 +1,8 @@
 package com.test.customizelistview;
 
-public class Cart {
+import java.io.Serializable;
+
+public class Cart implements Serializable {
     private Product product;
     private int quantity;
 

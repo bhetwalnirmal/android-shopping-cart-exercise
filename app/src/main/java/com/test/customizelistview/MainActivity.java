@@ -2,6 +2,7 @@ package com.test.customizelistview;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,12 +16,12 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
     // list of items to store
     ArrayList<Product> productList = new ArrayList<Product>();
-    private ArrayList<Cart> cart = new ArrayList<Cart>();
+    public static ArrayList<Cart> cart = new ArrayList<Cart>();
     Product selectedProduct;
     ListView lv;
     TextView qty, total;
     SeekBar sb;
-    Button add;
+    Button add, viewCart;
     double totalAmount, currentPrice;
 
     @Override
@@ -33,8 +34,18 @@ public class MainActivity extends AppCompatActivity {
         total = (TextView) findViewById(R.id.txvTotal);
         sb = (SeekBar) findViewById(R.id.seekBar);
         add = (Button) findViewById(R.id.btnAdd);
+        viewCart = (Button) findViewById(R.id.btnViewCart);
 
         lv.setAdapter(new ProdAdapter(this, productList));
+
+        viewCart.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, ViewCartActivity.class);
+                intent.putExtra("cart", cart);
+                startActivity(intent);
+            }
+        });
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -84,16 +95,32 @@ public class MainActivity extends AppCompatActivity {
 
     protected void addProductToCart (Product selectedProduct, int quantity) {
         Cart newItem = new Cart(selectedProduct, quantity);
+        boolean hasItem = false;
+        int index = 0;
 
-        for (Cart item : cart) {
+        for (int i = 0; i < cart.size(); i++) {
+            Cart item = cart.get(i);
+
             if (item.getProduct().getName().equals(selectedProduct.getName())) {
                 quantity = item.getQuantity() + quantity;
-                newItem.setQuantity(quantity);
+                index = i;
+                hasItem = true;
                 break;
             }
         }
 
-        cart.add(newItem);
+        if (hasItem) {
+            newItem.setQuantity(quantity);
+            cart.set(index, newItem);
+        } else {
+            cart.add(newItem);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateTotal();
     }
 
     protected void updateTotal () {
@@ -101,6 +128,9 @@ public class MainActivity extends AppCompatActivity {
         for (Cart item : cart) {
             totalAmount += item.getProductTotal();
         }
+
+        viewCart.setText("VIEW CART (" + cart.size() + ")");
+
         total.setText(String.format("$ %.2f", totalAmount));
     }
 }
